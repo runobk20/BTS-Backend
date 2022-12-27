@@ -11,8 +11,16 @@ const ProjectSchema = Schema({
         required: false
     },
     leader: {
-        type: String,
-        required: true
+        type: Object,
+        required: true,
+            id: {
+                type: String,
+                required: true
+            },
+            name: {
+                type: String,
+                required: true
+            }
     },
     members : {
         type: Array,

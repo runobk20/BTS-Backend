@@ -29,7 +29,6 @@ const createUser = async(req, res = response) => {
 
         const {id:uid, name, ownProjects, projects} = user;
         
-        console.log(user)
         return res.status(201).json({
             ok: true,
             uid,
