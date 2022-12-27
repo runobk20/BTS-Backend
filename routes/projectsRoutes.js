@@ -11,6 +11,6 @@ router.post('/new', validateJwt, createProject);
 
 router.get('/:id', validateJwt, getProject);
 
-router.put('/:id/add-member', addMemberToProject);
+router.post('/:id/add-member', addMemberToProject);
 
 module.exports = router;

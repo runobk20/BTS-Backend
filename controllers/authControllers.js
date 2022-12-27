@@ -26,11 +26,16 @@ const createUser = async(req, res = response) => {
         await user.save();
 
         const token = await generateToken(user.id, user.name);
+
+        const {id:uid, name, ownProjects, projects} = user;
         
+        console.log(user)
         return res.status(201).json({
             ok: true,
-            uid: user.id,
-            name: user.name,
+            uid,
+            name,
+            ownProjects,
+            projects,
             token
         });
         
@@ -73,10 +78,14 @@ const loginUser = async(req, res = response) => {
 
         const token = await generateToken(user.id, user.name);
 
+        const {uid, name, ownProjects, projects} = user;
+
         return res.status(200).json({
             ok: true,
-            uid: user.id,
-            name: user.name,
+            uid,
+            name,
+            ownProjects,
+            projects,
             token
         });
 

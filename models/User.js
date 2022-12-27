@@ -14,6 +14,14 @@ const UserSchema = Schema({
     password: {
         type: String,
         required: true
+    },
+    ownProjects: {
+        type: Array,
+        required: true
+    },
+    projects: {
+        type: Array,
+        required: true
     }
 });
 
