@@ -17,8 +17,7 @@ const createProject = async(req, res = response) => {
     try {
         const project = new Project(req.body);
 
-        project.leader.id = req.uid;
-        project.leader.name = req.name;
+        project.leader = req.uid;
 
         await project.save();
 
@@ -78,6 +77,14 @@ const addMemberToProject = async(req, res = response) => {
     const projectId = req.params.id;
 
     const project = await Project.findById(projectId);
+
+    if(!project) {
+        return res.status(400).json({
+            ok: false,
+            msg: 'No project with this id'
+        });
+    }
+
     const isMember = project.members.some(member => member.id === newMember.id);
 
     if(isMember) {
@@ -114,7 +121,7 @@ const deleteProject = async(req, res = response) => {
             msg: 'No project with this id'
         })};
 
-    if(project.leader.id !== req.uid) {
+    if(project.leader !== req.uid) {
         return res.status(403).json({
             ok: false,
             msg: 'To delete a project, you need to be the leader.'

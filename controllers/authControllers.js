@@ -27,12 +27,14 @@ const createUser = async(req, res = response) => {
 
         const token = await generateToken(user.id, user.name);
 
-        const {id:uid, name, ownProjects, projects} = user;
+        const {id:uid, name, ownProjects, projects, role, avatar} = user;
         
         return res.status(201).json({
             ok: true,
             uid,
             name,
+            role,
+            avatar,
             ownProjects,
             projects,
             token
@@ -114,8 +116,32 @@ const revalidateToken = async(req, res = response) => {
     });
 }
 
+const getUser = async(req, res = response) => {
+    const userId = req.body.userId;
+
+    const user = await User.findById(userId);
+
+    if(!user) {
+        return res.status(400).json({
+            ok: false,
+            msg: 'No user found'
+        });
+    }
+
+    const {name, id, role, avatar} = user;
+
+    return res.status(200).json({
+        ok: true,
+        name,
+        id,
+        role,
+        avatar
+    });
+}
+
 module.exports = {
     createUser,
+    getUser,
     loginUser,
     revalidateToken
 }
