@@ -32,9 +32,21 @@ const createBug = async(req, res = response) => {
     }
 };
 
-const getBug = (req, res = response) => {
-    return res.json({
-        ok: true
+const getBug = async(req, res = response) => {
+
+    const bugId = req.params.id;
+    const bug = await Bug.findById(bugId);
+    console.log(bug)
+
+    if(!bug) {
+        return res.status(400).json({
+            ok: false,
+            msg: 'No bug with this id'
+        });
+    }
+
+    return res.status(200).json({
+        ok: true,
     })
 };
 

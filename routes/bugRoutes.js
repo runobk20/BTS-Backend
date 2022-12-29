@@ -11,8 +11,11 @@ router.post('/new', [
     checkBug,
     validateFields
 ], createBug);
+
 router.get('/:id', validateJwt, getBug);
+
 router.put('/:id', validateJwt, updateBug);
+
 router.delete('/:id', validateJwt, deleteBug);
 
 module.exports = router;
