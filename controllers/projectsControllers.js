@@ -70,10 +70,10 @@ const addMemberToProject = async(req, res = response) => {
         });
     }
 
-    const newMember = {
+    /* const newMember = {
         id: user.id,
         name: user.name
-    }
+    } */
     const projectId = req.params.id;
 
     const project = await Project.findById(projectId);
@@ -85,7 +85,7 @@ const addMemberToProject = async(req, res = response) => {
         });
     }
 
-    const isMember = project.members.some(member => member.id === newMember.id);
+    const isMember = project.members.some(member => member.id === user.id);
 
     if(isMember) {
 
@@ -96,7 +96,7 @@ const addMemberToProject = async(req, res = response) => {
 
     }
 
-    const updatedProject = await Project.findByIdAndUpdate(projectId, {$push: {members: newMember}}, {new: true});
+    const updatedProject = await Project.findByIdAndUpdate(projectId, {$push: {members: user.id}}, {new: true});
 
     if(!updatedProject) {
         return res.status(500).json({
@@ -113,6 +113,7 @@ const addMemberToProject = async(req, res = response) => {
 
 const deleteProject = async(req, res = response) => {
 
+    
     const project = await Project.findById(req.params.id);
 
     if(!project) {
@@ -121,7 +122,7 @@ const deleteProject = async(req, res = response) => {
             msg: 'No project with this id'
         })};
 
-    if(project.leader !== req.uid) {
+    if(project.leader.toString() !== req.uid) {
         return res.status(403).json({
             ok: false,
             msg: 'To delete a project, you need to be the leader.'

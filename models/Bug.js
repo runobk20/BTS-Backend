@@ -10,11 +10,12 @@ const BugSchema = Schema({
         required: true
     },
     project: {
-        type: String,
+        type: Schema.Types.ObjectId,
+        ref: 'Project',
         required: true
     },
     date: {
-        type: String,
+        type: Date,
         required: true
     },
     severity: {
@@ -41,28 +42,11 @@ const BugSchema = Schema({
         type: String,
         required: true
     },
-    user: {
-        type: Object,
-        name: {
-            type: String,
-            required: true
-        },
-        id: {
-            type: String,
-            required: true
-        }
-    },
-    assignedTo: {
-        type: Object,
-        name: {
-            type: String,
-            required: true
-        },
-        id: {
-            type: String,
-            required: true
-        }
-    }
+    user: { 
+        type: Schema.Types.ObjectId, 
+        ref: 'User', 
+        required: true },
+    assignedTo: [{ type: Schema.Types.ObjectId, ref: 'User', required: true }]
 })
 
 BugSchema.method('toJSON', function() {

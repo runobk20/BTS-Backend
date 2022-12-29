@@ -1,4 +1,5 @@
 const {response} = require('express');
+const mongoose = require('mongoose');
 const Bug = require('../models/Bug');
 const Project = require('../models/Project');
 
@@ -8,10 +9,9 @@ const createBug = async(req, res = response) => {
         const {project:projectId} = req.body;
         const newBug = new Bug(req.body);
         
-        newBug.user = {
-            name: req.name,
-            id: req.uid
-        }
+        newBug.user = mongoose.Types.ObjectId(req.uid);
+
+        newBug.project = mongoose.Types.ObjectId(projectId);
 
         await newBug.save();
         await Project.findByIdAndUpdate(projectId, {$push: {bugs: newBug}});
@@ -47,6 +47,7 @@ const getBug = async(req, res = response) => {
 
     return res.status(200).json({
         ok: true,
+        bug
     })
 };
 
