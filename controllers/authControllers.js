@@ -79,7 +79,8 @@ const loginUser = async(req, res = response) => {
 
         const token = await generateToken(user.id, user.name);
 
-        const {uid, name, ownProjects, projects} = user;
+        const {_id:uid, name, ownProjects, projects} = user;
+        console.log(user)
 
         return res.status(200).json({
             ok: true,

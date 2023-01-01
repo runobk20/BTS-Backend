@@ -70,10 +70,6 @@ const addMemberToProject = async(req, res = response) => {
         });
     }
 
-    /* const newMember = {
-        id: user.id,
-        name: user.name
-    } */
     const projectId = req.params.id;
 
     const project = await Project.findById(projectId);
@@ -131,8 +127,11 @@ const deleteProject = async(req, res = response) => {
 
     try {
         const user = await User.findById(req.uid);
-        const updatedOwnProjects = user.ownProjects.filter(el =>  el !== project.id);
-        await User.findByIdAndUpdate(user.id, {ownProjects: updatedOwnProjects});
+        const updatedOwnProjects = user.ownProjects.filter(el => {
+            return el.toString() !== req.params.id;
+        });
+
+        await User.findByIdAndUpdate(user._id.toString(), {ownProjects: updatedOwnProjects});
         
         await Project.findByIdAndDelete(req.params.id);
 
