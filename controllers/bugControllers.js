@@ -1,10 +1,10 @@
 const {response} = require('express');
 const mongoose = require('mongoose');
-const { update } = require('../models/Bug');
 const Bug = require('../models/Bug');
 const Project = require('../models/Project');
+const { HttpError } = require('../utils/httpError');
 
-const createBug = async(req, res = response) => {
+const createBug = async(req, res = response, next) => {
 
     try {
         const {project:projectId} = req.body;
@@ -25,27 +25,19 @@ const createBug = async(req, res = response) => {
         });
 
     } catch (error) {
-        console.log(error);
-        return res.status(500).json({
-            ok: false,
-            msg: 'Something went wrong, please try again later.'
-        });
+        return next(error);
     }
 };
 
-const getBug = async(req, res = response) => {
+const getBug = async(req, res = response, next) => {
 
     try {
 
         const bugId = req.params.id;
-        const bug = await Bug.findById(bugId);
-        console.log(bug)
+        const bug = await Bug.findById(bugId).populate('user', 'name role');
 
         if(!bug) {
-            return res.status(400).json({
-                ok: false,
-                msg: 'No bug with this id'
-            });
+            return next(new HttpError('No bug with this id', 404));
         }
 
         return res.status(200).json({
@@ -54,16 +46,12 @@ const getBug = async(req, res = response) => {
         })
         
     } catch (error) {
-        console.log(error);
-        return res.status(500).json({
-            ok: false,
-            msg: 'Something went wrong'
-        })
+        return next(error);
     }
 
 };
 
-const updateBug = async(req, res = response) => {
+const updateBug = async(req, res = response, next) => {
 
     try {
         
@@ -72,10 +60,7 @@ const updateBug = async(req, res = response) => {
         const {...toUpdateData} = req.body;
         
         if(!bug) {
-            return res.status(400).json({
-                ok: false,
-                msg: 'No bug with this id'
-            });
+            return next(new HttpError('No bug with this id', 404));
         }
         
         await bug.updateOne(toUpdateData)
@@ -86,15 +71,11 @@ const updateBug = async(req, res = response) => {
         });
 
     } catch (error) {
-        console.log(error);
-        return res.status(500).json({
-            ok: false,
-            msg: 'Something went wrong'
-        });
+        return next(error);
     }
 };
 
-const deleteBug = async(req, res = response) => {
+const deleteBug = async(req, res = response, next) => {
 
     try {
 
@@ -103,10 +84,7 @@ const deleteBug = async(req, res = response) => {
         const projectId = bug.project.toString();
 
         if(!bug) {
-            return res.status(400).json({
-                ok: false,
-                msg: 'No bug with this id'
-            });
+            return next(new HttpError('No bug with this id', 404));
         }
         
         const project = await Project.findById(projectId);
@@ -121,11 +99,7 @@ const deleteBug = async(req, res = response) => {
         });
         
     } catch (error) {
-        console.log(error);
-        return res.status(500).json({
-            ok: false,
-            msg: 'Something went wrong'
-        });
+        return next(error);
     }
 };
 

@@ -1,5 +1,6 @@
 const express = require('express');
 const { dbConnection } = require('./database/config');
+const { handleErrors } = require('./helpers/handleErrors');
 require('dotenv').config();
 
 //App
@@ -24,3 +25,5 @@ app.use('/api/auth', require('./routes/authRoute'));
 app.use('/api/projects', require('./routes/projectsRoutes'));
 
 app.use('/api/bugs', require('./routes/bugRoutes'));
+
+app.use(handleErrors);

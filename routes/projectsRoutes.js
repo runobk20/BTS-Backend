@@ -1,6 +1,6 @@
 const {Router} = require('express');
 const {check} = require('express-validator');
-const { createProject, getProject, addMemberToProject, deleteProject } = require('../controllers/projectsControllers');
+const { createProject, getProject, addProjectMember, removeProjectMember, deleteProject } = require('../controllers/projectsControllers');
 
 const {validateFields} = require('../middlewares/validateFields');
 const {validateJwt} = require('../middlewares/validateJwt');
@@ -24,7 +24,13 @@ router.post('/:id/add-member',
     validateFields,
     validateJwt
 ],
-addMemberToProject);
+addProjectMember);
+
+router.put('/:id/remove-member',[
+    check('email', 'Should be a valid email').isEmail(),
+    validateJwt
+],
+removeProjectMember);
 
 router.delete('/:id', validateJwt, deleteProject);
 
