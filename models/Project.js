@@ -11,19 +11,13 @@ const ProjectSchema = Schema({
         required: false
     },
     leader: {
-        type: String,
-        required: true
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+        required: false
     },
-    members : {
-        type: Array,
-        required: true
-    },
-    bugs: {
-        type: Array,
-        required: true
-    }
-
-})
+    members: [{ type: Schema.Types.ObjectId, ref: 'User', required: true }],
+    bugs: [{ type: Schema.Types.ObjectId, ref: 'Bug', required: true }]
+});
 
 ProjectSchema.method('toJSON', function() {
     const {__v, _id, ...object} = this.toObject();

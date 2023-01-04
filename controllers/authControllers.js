@@ -2,8 +2,9 @@ const {response} = require('express');
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
 const { generateToken } = require('../helpers/generateToken');
+const { HttpError } = require('../utils/httpError');
 
-const createUser = async(req, res = response) => {
+const createUser = async(req, res = response, next) => {
 
     const {email, password} = req.body;
 
@@ -12,10 +13,7 @@ const createUser = async(req, res = response) => {
         let user = await User.findOne({email});
 
         if(user) {
-            return res.status(400).json({
-                ok: false,
-                msg: 'Email already in use'
-            })
+            return next(new HttpError('Email already in use', 400));
         }
         
         user = new User(req.body);
@@ -27,58 +25,47 @@ const createUser = async(req, res = response) => {
 
         const token = await generateToken(user.id, user.name);
 
-        const {id:uid, name, ownProjects, projects} = user;
+        const {id:uid, name, ownProjects, projects, role, avatar} = user;
         
-        console.log(user)
         return res.status(201).json({
             ok: true,
             uid,
             name,
+            role,
+            avatar,
             ownProjects,
             projects,
             token
         });
         
     } catch (error) {
-        console.log(error);
-        return res.status(500).json({
-            ok: false,
-            msg: 'Please talk with an Admin'
-        })
+        next(error);
     }
-
-
-
 }
 
-const loginUser = async(req, res = response) => {
+const loginUser = async(req, res = response, next) => {
 
     const {email, password} = req.body;
 
     try {
-        let user = await User.findOne({email});
+        let user = await User.findOne({email}).populate([
+            { path: 'ownProjects', select: 'name' },
+            { path: 'projects', select: 'name'}
+        ]);
 
         if(!user) {
-            return res.status(400).json({
-                ok: false,
-                msg: 'No user with this email.'
-            });
+            return next(new HttpError('No user with this email', 404));
         }
 
         const validPassword = bcrypt.compareSync(password, user.password);
 
         if(!validPassword) {
-
-            return res.status(401).json({
-                ok: false,
-                msg: 'Not a valid password'
-            });
-
+            return next(new HttpError('Invalid password', 401));
         }
 
         const token = await generateToken(user.id, user.name);
 
-        const {uid, name, ownProjects, projects} = user;
+        const {_id:uid, name, ownProjects, projects} = user;
 
         return res.status(200).json({
             ok: true,
@@ -91,11 +78,7 @@ const loginUser = async(req, res = response) => {
 
 
     } catch (error) {
-        console.log(error);
-        return res.status(500).json({
-            ok: false,
-            msg: 'Something went wrong.'
-        })
+        return next(error);
     }
 }
 
@@ -106,7 +89,6 @@ const revalidateToken = async(req, res = response) => {
 
     const token = await generateToken(uid, name);
 
-
     return res.status(200).json({
         ok: true,
         uid,
@@ -115,8 +97,56 @@ const revalidateToken = async(req, res = response) => {
     });
 }
 
+const getUser = async(req, res = response, next) => {
+    const email = req.body.email;
+
+    try {
+        const user = await User.findOne({email});
+        if(!user) {
+            return next(new HttpError('No user found', 404));
+        }
+
+        const {name, id, role, avatar} = user;
+
+        return res.status(200).json({
+            ok: true,
+            name,
+            id,
+            role,
+            avatar
+        });
+        
+    } catch (error) {
+        return next(error);
+    }
+}
+
+const deleteUser = async(req, res = response, next) => {
+
+    try {
+
+        const { uid } = req.body;
+        const user = await User.findById(uid);
+
+        if(!user) return next(new HttpError('No user with this id', 404));
+
+        await User.findByIdAndDelete(uid);
+
+        return res.status(200).json({
+            ok: true,
+            msg: 'User deleted successfully'
+        });
+        
+    } catch (error) {
+        return next(error);
+    }
+
+}
+
 module.exports = {
     createUser,
+    deleteUser,
+    getUser,
     loginUser,
     revalidateToken
 }

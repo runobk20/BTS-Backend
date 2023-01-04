@@ -15,14 +15,16 @@ const UserSchema = Schema({
         type: String,
         required: true
     },
-    ownProjects: {
-        type: Array,
+    role: {
+        type: String,
         required: true
     },
-    projects: {
-        type: Array,
+    avatar: {
+        type: String,
         required: true
-    }
+    },
+    ownProjects: [{ type:Schema.Types.ObjectId, ref: 'Project', required: true }],
+    projects: [{ type:Schema.Types.ObjectId, ref: 'Project', required: true }]
 });
 
 UserSchema.method('toJSON', function() {
