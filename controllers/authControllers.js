@@ -121,8 +121,31 @@ const getUser = async(req, res = response, next) => {
     }
 }
 
+const deleteUser = async(req, res = response, next) => {
+
+    try {
+
+        const { uid } = req.body;
+        const user = await User.findById(uid);
+
+        if(!user) return next(new HttpError('No user with this id', 404));
+
+        await User.findByIdAndDelete(uid);
+
+        return res.status(200).json({
+            ok: true,
+            msg: 'User deleted successfully'
+        });
+        
+    } catch (error) {
+        return next(error);
+    }
+
+}
+
 module.exports = {
     createUser,
+    deleteUser,
     getUser,
     loginUser,
     revalidateToken
