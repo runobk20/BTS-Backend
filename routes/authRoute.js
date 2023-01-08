@@ -11,6 +11,7 @@ router.post('/new',
     check('name', 'Name is required').not().isEmpty(),
     check('email', 'Email is required and should have @ and .something').isEmail(),
     check('password', 'Password should be longer than 6').not().isEmpty().isLength({min: 6}),
+    check('role', 'Role is required').not().isEmpty(),
     validateFields
 ],
 createUser);

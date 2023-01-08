@@ -20,6 +20,8 @@ const createUser = async(req, res = response, next) => {
 
         const salt = bcrypt.genSaltSync();
         user.password = bcrypt.hashSync(password, salt);
+
+        user.avatar = `https://ui-avatars.com/api/?name=${req.body.name}&size=150&background=random`;
     
         await user.save();
 

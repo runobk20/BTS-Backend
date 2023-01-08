@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 const { dbConnection } = require('./database/config');
 const { handleErrors } = require('./helpers/handleErrors');
 require('dotenv').config();
@@ -15,6 +16,8 @@ app.listen( process.env.PORT, () => {
 app.use(express.static('public'));
 
 app.use(express.json());
+
+app.use(cors());
 
 
 
