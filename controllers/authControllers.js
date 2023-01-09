@@ -67,12 +67,14 @@ const loginUser = async(req, res = response, next) => {
 
         const token = await generateToken(user.id, user.name);
 
-        const {_id:uid, name, ownProjects, projects} = user;
+        const {_id:uid, name, ownProjects, projects, avatar, role} = user;
 
         return res.status(200).json({
             ok: true,
             uid,
             name,
+            role,
+            avatar,
             ownProjects,
             projects,
             token
@@ -86,17 +88,34 @@ const loginUser = async(req, res = response, next) => {
 
 const revalidateToken = async(req, res = response) => {
 
-    const uid = req.uid;
-    const name = req.name;
+   try {
 
-    const token = await generateToken(uid, name);
+        let user = await User.findById(req.uid).populate([
+            { path: 'ownProjects', select: 'name' },
+            { path: 'projects', select: 'name'}
+        ]);
 
-    return res.status(200).json({
-        ok: true,
-        uid,
-        name,
-        token
-    });
+        if(!user) return next(new HttpError('No user with this email', 404));
+
+        const {_id:uid, name, ownProjects, projects, avatar, role} = user;
+
+        const token = await generateToken(uid, name);
+
+        return res.status(200).json({
+            ok: true,
+            uid,
+            name,
+            role,
+            avatar,
+            ownProjects,
+            projects,
+            token
+        });
+
+   } catch (error) {
+        console.log(error);
+        return next(error);
+   }
 }
 
 const getUser = async(req, res = response, next) => {
