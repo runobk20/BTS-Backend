@@ -8,7 +8,7 @@ const createProject = async(req, res = response, next) => {
     const user = await User.findById(req.uid);
     const {ownProjects} = user;
 
-    if(ownProjects.length >= 2) {
+    if(ownProjects.length >= 3) {
         return next(new HttpError('Maximum quantity of projects reached, delete one or more to create a new one', 409));
     }
 
@@ -23,8 +23,7 @@ const createProject = async(req, res = response, next) => {
 
         return res.status(201).json({
             ok: true,
-            name: project.name,
-            projectId : project.id
+            project
         });
         
     } catch (error) {
@@ -70,8 +69,10 @@ const addProjectMember = async(req, res = response, next) => {
         const projectId = req.params.id;
         const project = await Project.findById(projectId);
         if(!project) return next(new HttpError('No project with this id', 404));
+
+        if(project.leader.toString() !== req.uid) return next(new HttpError('You need to be the leader to add people', 403));
     
-        const isMember = project.members.some(member => member.id === user.id);
+        const isMember = project.members.some(member => member.toString() === user.id);
         if(isMember) return next(new HttpError('This user is already a member of the project', 400));
     
         const updatedProject = await Project.findByIdAndUpdate(projectId, {$push: {members: user.id}}, {new: true});
@@ -94,7 +95,6 @@ const removeProjectMember = async(req, res = response, next) => {
     const uid = req.body.uid;
     const projectId = req.params.id;
 
-
     try {
         const project = await Project.findById(projectId);
 
@@ -102,16 +102,16 @@ const removeProjectMember = async(req, res = response, next) => {
         if(project.leader.toString() !== req.uid) return next(new HttpError('Only the leader can remove members', 403));
 
         const user = await User.findById(uid);
-        if(!user) return next(new HttpError('No user with this email', 404));
+        if(!user) return next(new HttpError('No user with this id', 404));
 
         const isMember = project.members.some(member => member.toString() === user.id);
         if(!isMember) return next(new HttpError('This user is not a member of the project', 400));
 
         const updatedMemberProjects = user.projects.filter(project => project.toString() !== projectId);
-        await User.findOneAndUpdate({id: user.id}, {projects: updatedMemberProjects});
+        await User.findByIdAndDelete(user.id, {projects: updatedMemberProjects});
 
         const updatedProjectMembers = project.members.filter(memberId => memberId.toString() !== user.id);
-        await Project.findOneAndUpdate({id: projectId}, {members: updatedProjectMembers});
+        await Project.findByIdAndUpdate(projectId, {members: updatedProjectMembers});
 
         return res.status(200).json({
             ok: true
@@ -123,8 +123,6 @@ const removeProjectMember = async(req, res = response, next) => {
 }
 
 const deleteProject = async(req, res = response, next) => {
-
-    
     const project = await Project.findById(req.params.id);
 
     if(!project) {

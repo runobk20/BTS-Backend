@@ -10,7 +10,7 @@ const router = Router();
 router.post('/new', 
 [
     check('name', 'Name is required and should be less than 40 characters').not().isEmpty().isLength({max: 40}),
-    check('description', 'Description is required and should be less than 140 characters').not().isEmpty().isLength({max: 140}),
+    check('description', 'Description is required and should be less than 250 characters').not().isEmpty().isLength({max: 250}),
     validateFields,
     validateJwt
 ], 

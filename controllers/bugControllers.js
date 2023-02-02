@@ -2,6 +2,7 @@ const {response} = require('express');
 const mongoose = require('mongoose');
 const Bug = require('../models/Bug');
 const Project = require('../models/Project');
+const User = require('../models/User');
 const { HttpError } = require('../utils/httpError');
 
 const createBug = async(req, res = response, next) => {
@@ -13,15 +14,16 @@ const createBug = async(req, res = response, next) => {
         newBug.user = mongoose.Types.ObjectId(req.uid);
 
         newBug.project = mongoose.Types.ObjectId(projectId);
-
         await newBug.save();
         await Project.findByIdAndUpdate(projectId, {$push: {bugs: newBug}});
+        await User.findByIdAndUpdate(req.uid, {$push: {bugs: newBug}});
 
-        const {id:bugId} = newBug;
+        const {id} = newBug;
 
         return res.status(201).json({
             ok: true,
-            bugId
+            id,
+            userId: req.uid
         });
 
     } catch (error) {
@@ -34,7 +36,7 @@ const getBug = async(req, res = response, next) => {
     try {
 
         const bugId = req.params.id;
-        const bug = await Bug.findById(bugId).populate('user', 'name role');
+        const bug = await Bug.findById(bugId).populate('user', 'name role avatar');
 
         if(!bug) {
             return next(new HttpError('No bug with this id', 404));
@@ -67,7 +69,9 @@ const updateBug = async(req, res = response, next) => {
 
         return res.status(200).json({
             ok: true,
-            msg: 'Bug updated'
+            msg: 'Bug updated',
+            bugId: bug._id,
+            project: bug.project
         });
 
     } catch (error) {
@@ -80,7 +84,7 @@ const deleteBug = async(req, res = response, next) => {
     try {
 
         const bugId = req.params.id;
-        const bug = await Bug.findOneAndDelete({id: bugId});
+        const bug = await Bug.findByIdAndDelete(bugId);
         const projectId = bug.project.toString();
 
         if(!bug) {
@@ -95,7 +99,8 @@ const deleteBug = async(req, res = response, next) => {
 
         return res.status(200).json({
             ok: true,
-            msg: 'Bug deleted'
+            msg: 'Bug deleted',
+            project: projectId
         });
         
     } catch (error) {

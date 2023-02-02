@@ -52,7 +52,8 @@ const loginUser = async(req, res = response, next) => {
     try {
         let user = await User.findOne({email}).populate([
             { path: 'ownProjects', select: 'name' },
-            { path: 'projects', select: 'name'}
+            { path: 'projects', select: 'name'},
+            { path: 'bugs', select: 'title project status priority severity'}
         ]);
 
         if(!user) {
@@ -67,7 +68,7 @@ const loginUser = async(req, res = response, next) => {
 
         const token = await generateToken(user.id, user.name);
 
-        const {_id:uid, name, ownProjects, projects, avatar, role} = user;
+        const {_id:uid, name, ownProjects, projects, avatar, role, bugs} = user;
 
         return res.status(200).json({
             ok: true,
@@ -77,6 +78,7 @@ const loginUser = async(req, res = response, next) => {
             avatar,
             ownProjects,
             projects,
+            bugs,
             token
         });
 
@@ -119,22 +121,30 @@ const revalidateToken = async(req, res = response) => {
 }
 
 const getUser = async(req, res = response, next) => {
-    const email = req.body.email;
+    const uid = req.body.uid;
 
     try {
-        const user = await User.findOne({email});
+        let user = await User.findById(uid).populate([
+            { path: 'ownProjects', select: 'name' },
+            { path: 'projects', select: 'name'},
+            { path: 'bugs', select: 'title project status priority severity'}
+        ]);
+
         if(!user) {
             return next(new HttpError('No user found', 404));
         }
 
-        const {name, id, role, avatar} = user;
+        const {_id:uid, name, ownProjects, projects, avatar, role, bugs} = user;
 
         return res.status(200).json({
             ok: true,
+            uid,
             name,
-            id,
+            ownProjects,
+            projects,
+            avatar,
             role,
-            avatar
+            bugs
         });
         
     } catch (error) {

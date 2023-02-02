@@ -24,7 +24,8 @@ const UserSchema = Schema({
         required: true
     },
     ownProjects: [{ type:Schema.Types.ObjectId, ref: 'Project', required: true }],
-    projects: [{ type:Schema.Types.ObjectId, ref: 'Project', required: true }]
+    projects: [{ type:Schema.Types.ObjectId, ref: 'Project', required: true }],
+    bugs: [{type:Schema.Types.ObjectId, ref: 'Bug', required: false}]
 });
 
 UserSchema.method('toJSON', function() {
