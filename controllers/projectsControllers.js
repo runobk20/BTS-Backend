@@ -1,4 +1,5 @@
 const {response} = require('express');
+const { validationResult } = require('express-validator');
 const Project = require('../models/Project');
 const User = require('../models/User');
 const { HttpError } = require('../utils/httpError');
@@ -7,7 +8,6 @@ const createProject = async(req, res = response, next) => {
 
     const user = await User.findById(req.uid);
     const {ownProjects} = user;
-
     if(ownProjects.length >= 3) {
         return next(new HttpError('Maximum quantity of projects reached, delete one or more to create a new one', 409));
     }
@@ -39,7 +39,23 @@ const getProject = async(req, res = response, next) => {
     try {
         const project = await Project.findById(projectId).populate([
             { path: 'members', select:'name role avatar' },
-            { path: 'bugs' },
+            { 
+                path: 'bugs',
+                populate: [
+                    {
+                        path: 'user',
+                        select: 'name'
+                    },
+                    {
+                        path: 'assignedTo',
+                        select: 'name'
+                    },
+                    {
+                        path: 'project',
+                        select: 'name leader'
+                    }
+                ]
+            },
             { path: 'leader', select: 'name role avatar' }
         ]);
 
@@ -102,13 +118,15 @@ const removeProjectMember = async(req, res = response, next) => {
         if(project.leader.toString() !== req.uid) return next(new HttpError('Only the leader can remove members', 403));
 
         const user = await User.findById(uid);
+        console.log(user.id)
         if(!user) return next(new HttpError('No user with this id', 404));
 
         const isMember = project.members.some(member => member.toString() === user.id);
         if(!isMember) return next(new HttpError('This user is not a member of the project', 400));
 
         const updatedMemberProjects = user.projects.filter(project => project.toString() !== projectId);
-        await User.findByIdAndDelete(user.id, {projects: updatedMemberProjects});
+        await User.findByIdAndUpdate(user.id, {projects: updatedMemberProjects});
+        
 
         const updatedProjectMembers = project.members.filter(memberId => memberId.toString() !== user.id);
         await Project.findByIdAndUpdate(projectId, {members: updatedProjectMembers});

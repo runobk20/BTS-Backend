@@ -46,7 +46,14 @@ const BugSchema = Schema({
         type: Schema.Types.ObjectId, 
         ref: 'User', 
         required: true },
-    assignedTo: [{ type: Schema.Types.ObjectId, ref: 'User', required: true }]
+    assignedTo: { 
+        type: Schema.Types.ObjectId, 
+        ref: 'User', 
+        required: false },
+    comments: {
+        type: Array,
+        required: false
+    }
 })
 
 BugSchema.method('toJSON', function() {

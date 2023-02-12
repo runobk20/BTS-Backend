@@ -18,12 +18,15 @@ const createBug = async(req, res = response, next) => {
         await Project.findByIdAndUpdate(projectId, {$push: {bugs: newBug}});
         await User.findByIdAndUpdate(req.uid, {$push: {bugs: newBug}});
 
-        const {id} = newBug;
+        const returnedBug = await Bug.findById(newBug._id).populate([
+            {path: 'assignedTo', select: 'name'},
+            {path: 'user', select: 'name role avatar'},
+            {path: 'project', select: 'name leader'}
+        ]);
 
         return res.status(201).json({
             ok: true,
-            id,
-            userId: req.uid
+            bug: returnedBug
         });
 
     } catch (error) {
@@ -36,7 +39,11 @@ const getBug = async(req, res = response, next) => {
     try {
 
         const bugId = req.params.id;
-        const bug = await Bug.findById(bugId).populate('user', 'name role avatar');
+        const bug = await Bug.findById(bugId).populate([
+            {path: 'assignedTo', select: 'name'},
+            {path: 'user', select: 'name role avatar'},
+            {path: 'project', select: 'name leader'}
+        ]);
 
         if(!bug) {
             return next(new HttpError('No bug with this id', 404));
@@ -108,9 +115,36 @@ const deleteBug = async(req, res = response, next) => {
     }
 };
 
+const assignBug = async(req, res = response, next) => {
+    try {
+        const {member} = req.body;
+        const {id} = req.params;
+        
+        const bug = await Bug.findById(id);
+        if(!bug) {
+            return next(new HttpError('No bug with this id', 404));
+        }
+
+        const user = User.findById(member);
+        if(!user) {
+            return next(new HttpError('No user with this id', 404));
+        }
+
+        await Bug.findByIdAndUpdate(id, {assignedTo: member})
+
+        return res.status(200).json({
+            ok: true
+        });
+
+    } catch(error) {
+        return next(error);
+    }
+}
+
 module.exports = {
     createBug,
     deleteBug,
     getBug,
-    updateBug
+    updateBug,
+    assignBug
 }

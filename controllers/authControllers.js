@@ -53,9 +53,17 @@ const loginUser = async(req, res = response, next) => {
         let user = await User.findOne({email}).populate([
             { path: 'ownProjects', select: 'name' },
             { path: 'projects', select: 'name'},
-            { path: 'bugs', select: 'title project status priority severity'}
+            { 
+                path: 'bugs', 
+                populate:[
+                    {path: 'title'},
+                    {path: 'project', select: 'name'},
+                    {path: 'status'},
+                    {path: 'priority'},
+                    {path: 'severity'},
+                    {path: 'user', select: 'name'},
+            ]}
         ]);
-
         if(!user) {
             return next(new HttpError('No user with this email', 404));
         }
@@ -91,15 +99,24 @@ const loginUser = async(req, res = response, next) => {
 const revalidateToken = async(req, res = response) => {
 
    try {
-
         let user = await User.findById(req.uid).populate([
             { path: 'ownProjects', select: 'name' },
-            { path: 'projects', select: 'name'}
+            { path: 'projects', select: 'name'},
+            { 
+                path: 'bugs', 
+                populate:[
+                    {path: 'title'},
+                    {path: 'project', select: 'name'},
+                    {path: 'status'},
+                    {path: 'priority'},
+                    {path: 'severity'},
+                    {path: 'user', select: 'name'},
+            ]}
         ]);
 
         if(!user) return next(new HttpError('No user with this email', 404));
 
-        const {_id:uid, name, ownProjects, projects, avatar, role} = user;
+        const {_id:uid, name, ownProjects, projects, avatar, role, bugs} = user;
 
         const token = await generateToken(uid, name);
 
@@ -111,6 +128,7 @@ const revalidateToken = async(req, res = response) => {
             avatar,
             ownProjects,
             projects,
+            bugs,
             token
         });
 
@@ -121,10 +139,10 @@ const revalidateToken = async(req, res = response) => {
 }
 
 const getUser = async(req, res = response, next) => {
-    const uid = req.body.uid;
-
+    
+    const id = req.body.uid;
     try {
-        let user = await User.findById(uid).populate([
+        let user = await User.findById(id).populate([
             { path: 'ownProjects', select: 'name' },
             { path: 'projects', select: 'name'},
             { path: 'bugs', select: 'title project status priority severity'}
