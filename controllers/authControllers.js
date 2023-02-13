@@ -2,7 +2,7 @@ const {response} = require('express');
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
 const { generateToken } = require('../helpers/generateToken');
-const { HttpError } = require('../utils/httpError');
+const { HttpError } = require('../utils/HttpError');
 
 const createUser = async(req, res = response, next) => {
 

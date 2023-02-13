@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const Bug = require('../models/Bug');
 const Project = require('../models/Project');
 const User = require('../models/User');
-const { HttpError } = require('../utils/httpError');
+const { HttpError } = require('../utils/HttpError');
 
 const createBug = async(req, res = response, next) => {
 

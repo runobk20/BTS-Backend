@@ -2,7 +2,7 @@ const {response} = require('express');
 const { validationResult } = require('express-validator');
 const Project = require('../models/Project');
 const User = require('../models/User');
-const { HttpError } = require('../utils/httpError');
+const { HttpError } = require('../utils/HttpError');
 
 const createProject = async(req, res = response, next) => {
 
