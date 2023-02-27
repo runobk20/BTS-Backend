@@ -61,7 +61,7 @@ const loginUser = async(req, res = response, next) => {
                     {path: 'status'},
                     {path: 'priority'},
                     {path: 'severity'},
-                    {path: 'user', select: 'name'},
+                    {path: 'user', select: 'name'}
             ]}
         ]);
         if(!user) {
@@ -111,6 +111,9 @@ const revalidateToken = async(req, res = response) => {
                     {path: 'priority'},
                     {path: 'severity'},
                     {path: 'user', select: 'name'},
+                    {path: 'comments', populate: [{
+                        path: 'user', select: 'name avatar'
+                    }]}
             ]}
         ]);
 

@@ -29,4 +29,6 @@ app.use('/api/projects', require('./routes/projectsRoutes'));
 
 app.use('/api/bugs', require('./routes/bugRoutes'));
 
+app.use('/api/comments', require('./routes/commentsRoutes'));
+
 app.use(handleErrors);

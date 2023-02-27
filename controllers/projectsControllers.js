@@ -1,7 +1,7 @@
 const {response} = require('express');
-const { validationResult } = require('express-validator');
 const Project = require('../models/Project');
 const User = require('../models/User');
+const Bug = require('../models/Bug');
 const { HttpError } = require('../utils/HttpError');
 
 const createProject = async(req, res = response, next) => {
@@ -53,7 +53,7 @@ const getProject = async(req, res = response, next) => {
                     {
                         path: 'project',
                         select: 'name leader'
-                    }
+                    },
                 ]
             },
             { path: 'leader', select: 'name role avatar' }
@@ -157,6 +157,12 @@ const deleteProject = async(req, res = response, next) => {
             return el.toString() !== req.params.id;
         });
 
+        console.log(project.bugs)
+
+        project.bugs.forEach(async bug => {
+            await Bug.findByIdAndDelete(bug._id)
+        }) 
+        
         await User.findByIdAndUpdate(user._id.toString(), {ownProjects: updatedOwnProjects});
         
         await Project.findByIdAndDelete(req.params.id);

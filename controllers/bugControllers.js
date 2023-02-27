@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const Bug = require('../models/Bug');
 const Project = require('../models/Project');
 const User = require('../models/User');
+const Comment = require('../models/Comment');
 const { HttpError } = require('../utils/HttpError');
 
 const createBug = async(req, res = response, next) => {
@@ -21,7 +22,7 @@ const createBug = async(req, res = response, next) => {
         const returnedBug = await Bug.findById(newBug._id).populate([
             {path: 'assignedTo', select: 'name'},
             {path: 'user', select: 'name role avatar'},
-            {path: 'project', select: 'name leader'}
+            {path: 'project', select: 'name leader'},
         ]);
 
         return res.status(201).json({
@@ -42,7 +43,7 @@ const getBug = async(req, res = response, next) => {
         const bug = await Bug.findById(bugId).populate([
             {path: 'assignedTo', select: 'name'},
             {path: 'user', select: 'name role avatar'},
-            {path: 'project', select: 'name leader'}
+            {path: 'project', select: 'name leader'},
         ]);
 
         if(!bug) {
@@ -141,10 +142,43 @@ const assignBug = async(req, res = response, next) => {
     }
 }
 
+const addComment = async(req, res = response, next) => {
+    try {
+        const {uid} = req;
+        const {bugId, comment} = req.body;
+        const bug = await Bug.findById(bugId);
+        if(!bug) {
+            return next(new HttpError('No bug with this id', 404));
+        }   
+
+        const user = await User.findById(uid);
+        if(!user) {
+            return next(new HttpError('No user with this id', 404));
+        }
+
+        const newComment = new Comment();
+        newComment.user = {name: user.name, avatar: user.avatar, role: user.role};
+        newComment.bug = mongoose.Types.ObjectId(bugId);
+        newComment.content = comment;
+        await newComment.save();
+
+        await Bug.findByIdAndUpdate(bugId, {$push: {comments: newComment}});
+
+        return res.status(201).json({
+            ok: true,
+            comment: newComment
+        });
+
+    } catch (error) {
+        return next(error);
+    }
+}
+
 module.exports = {
     createBug,
     deleteBug,
     getBug,
     updateBug,
-    assignBug
+    assignBug,
+    addComment
 }

@@ -45,11 +45,13 @@ const BugSchema = Schema({
     user: { 
         type: Schema.Types.ObjectId, 
         ref: 'User', 
-        required: true },
+        required: true 
+    },
     assignedTo: { 
         type: Schema.Types.ObjectId, 
         ref: 'User', 
-        required: false },
+        required: false 
+    },
     comments: {
         type: Array,
         required: false
