@@ -147,17 +147,13 @@ const addComment = async(req, res = response, next) => {
         const {uid} = req;
         const {bugId, comment} = req.body;
         const bug = await Bug.findById(bugId);
-        if(!bug) {
-            return next(new HttpError('No bug with this id', 404));
-        }   
+        if(!bug) return next(new HttpError('No bug with this id', 404));
 
         const user = await User.findById(uid);
-        if(!user) {
-            return next(new HttpError('No user with this id', 404));
-        }
+        if(!user) return next(new HttpError('No user with this id', 404));
 
         const newComment = new Comment();
-        newComment.user = {name: user.name, avatar: user.avatar, role: user.role};
+        newComment.user = {name: user.name, avatar: user.avatar, role: user.role, id: user.id || user._id};
         newComment.bug = mongoose.Types.ObjectId(bugId);
         newComment.content = comment;
         await newComment.save();
@@ -174,11 +170,42 @@ const addComment = async(req, res = response, next) => {
     }
 }
 
+const deleteComment = async(req, res = response, next) => {
+    try {
+        const userId = req.uid;
+        const {commentId, commentCreator, commentBug} = req.body;
+        const parsedComId = mongoose.Types.ObjectId(commentId);
+
+        const user = await User.findById(userId);
+        if(!user) return next(new HttpError('No user with this id', 404));
+
+        if(commentCreator !== userId) return next(new HttpError('You need to be the creator to delete a comment', 403));
+
+        const comment = await Comment.findByIdAndDelete(parsedComId);
+        if(!comment) return next(new HttpError('No comment with this id', 404));
+
+        const bug = await Bug.findByIdAndUpdate(commentBug)
+        const updatedComments = bug.comments.filter(comment => {
+            return comment._id.toString() !== commentId;
+        })
+        await Bug.findByIdAndUpdate(commentBug, {comments: updatedComments});
+        
+        return res.status(200).json({
+            ok: true,
+            msg: 'Comment deleted'
+        });
+
+    } catch(error) {
+        return next(error);
+    }
+}
+
 module.exports = {
     createBug,
     deleteBug,
     getBug,
     updateBug,
     assignBug,
-    addComment
+    addComment,
+    deleteComment
 }

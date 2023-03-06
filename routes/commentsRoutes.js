@@ -1,12 +1,12 @@
 const {Router} = require('express');
 const { check } = require('express-validator');
 const {validateJwt} = require('../middlewares/validateJwt');
-const {addComment} = require('../controllers/bugControllers');
+const {addComment, deleteComment} = require('../controllers/bugControllers');
 
 
 const router = Router();
 
-router.post('/', [
+router.post('/add', [
     check('user', 'User is required').not().isEmpty(),
     check('bug', 'Bug is required').not().isEmpty(),
     check('content', 'Content is required').not().isEmpty().isLength({max: 140}),
@@ -14,6 +14,6 @@ router.post('/', [
 ],
 addComment);
 
-router.delete('/delete', validateJwt);
+router.delete('/delete', validateJwt, deleteComment);
 
 module.exports = router;
