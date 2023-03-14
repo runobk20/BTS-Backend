@@ -8,16 +8,18 @@ const { HttpError } = require('../utils/HttpError');
 
 const createBug = async(req, res = response, next) => {
 
+    if(req.role === 'developer') return next(new HttpError('This action is available for testers only.'));
+
     try {
         const {project:projectId} = req.body;
         const newBug = new Bug(req.body);
         
-        newBug.user = mongoose.Types.ObjectId(req.uid);
+        newBug.user = mongoose.Types.ObjectId(req.id);
 
         newBug.project = mongoose.Types.ObjectId(projectId);
         await newBug.save();
         await Project.findByIdAndUpdate(projectId, {$push: {bugs: newBug}});
-        await User.findByIdAndUpdate(req.uid, {$push: {bugs: newBug}});
+        await User.findByIdAndUpdate(req.id, {$push: {bugs: newBug}});
 
         const returnedBug = await Bug.findById(newBug._id).populate([
             {path: 'assignedTo', select: 'name'},
@@ -72,7 +74,7 @@ const updateBug = async(req, res = response, next) => {
         if(!bug) {
             return next(new HttpError('No bug with this id', 404));
         }
-        
+
         await bug.updateOne(toUpdateData)
 
         return res.status(200).json({
@@ -89,15 +91,17 @@ const updateBug = async(req, res = response, next) => {
 
 const deleteBug = async(req, res = response, next) => {
 
+    if(req.role === 'developer') return next(new HttpError('This action is available for testers only.'));
+
     try {
 
         const bugId = req.params.id;
-        const bug = await Bug.findByIdAndDelete(bugId);
+        const bug = await Bug.findById(bugId);
         const projectId = bug.project.toString();
+        
+        if(!bug) return next(new HttpError('No bug with this id', 404));
 
-        if(!bug) {
-            return next(new HttpError('No bug with this id', 404));
-        }
+        await Bug.findByIdAndDelete(bugId);
         
         const project = await Project.findById(projectId);
         const updatedBugs = project.bugs.filter(bugId => {
@@ -122,19 +126,18 @@ const assignBug = async(req, res = response, next) => {
         const {id} = req.params;
         
         const bug = await Bug.findById(id);
-        if(!bug) {
-            return next(new HttpError('No bug with this id', 404));
-        }
+        if(!bug) return next(new HttpError('No bug with this id', 404));
 
         const user = User.findById(member);
-        if(!user) {
-            return next(new HttpError('No user with this id', 404));
-        }
+        if(!user) return next(new HttpError('No user with this id', 404));
+
+        await User.findByIdAndUpdate(member, {$push: {bugs: bug._id}});
 
         await Bug.findByIdAndUpdate(id, {assignedTo: member})
 
         return res.status(200).json({
-            ok: true
+            ok: true,
+            msg: 'User assigned'
         });
 
     } catch(error) {
@@ -172,7 +175,7 @@ const addComment = async(req, res = response, next) => {
 
 const deleteComment = async(req, res = response, next) => {
     try {
-        const userId = req.uid;
+        const userId = req.id;
         const {commentId, commentCreator, commentBug} = req.body;
         const parsedComId = mongoose.Types.ObjectId(commentId);
 

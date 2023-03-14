@@ -24,14 +24,13 @@ const createUser = async(req, res = response, next) => {
         user.avatar = `https://ui-avatars.com/api/?name=${req.body.name}&size=150&background=random`;
     
         await user.save();
+        const token = await generateToken(user.id, user.name, user.role);
 
-        const token = await generateToken(user.id, user.name);
-
-        const {id:uid, name, ownProjects, projects, role, avatar} = user;
+        const {id, name, ownProjects, projects, role, avatar} = user;
         
         return res.status(201).json({
             ok: true,
-            uid,
+            id,
             name,
             role,
             avatar,
@@ -74,13 +73,13 @@ const loginUser = async(req, res = response, next) => {
             return next(new HttpError('Invalid password', 401));
         }
 
-        const token = await generateToken(user.id, user.name);
+        const token = await generateToken(user.id, user.name, user.role);
 
-        const {_id:uid, name, ownProjects, projects, avatar, role, bugs} = user;
+        const {id, name, ownProjects, projects, avatar, role, bugs} = user;
 
         return res.status(200).json({
             ok: true,
-            uid,
+            id,
             name,
             role,
             avatar,
@@ -99,7 +98,7 @@ const loginUser = async(req, res = response, next) => {
 const revalidateToken = async(req, res = response) => {
 
    try {
-        let user = await User.findById(req.uid).populate([
+        let user = await User.findById(req.id).populate([
             { path: 'ownProjects', select: 'name' },
             { path: 'projects', select: 'name'},
             { 
@@ -119,13 +118,13 @@ const revalidateToken = async(req, res = response) => {
 
         if(!user) return next(new HttpError('No user with this email', 404));
 
-        const {_id:uid, name, ownProjects, projects, avatar, role, bugs} = user;
+        const {id, name, ownProjects, projects, avatar, role, bugs} = user;
 
-        const token = await generateToken(uid, name);
+        const token = await generateToken(id, name, role);
 
         return res.status(200).json({
             ok: true,
-            uid,
+            id,
             name,
             role,
             avatar,
@@ -143,9 +142,10 @@ const revalidateToken = async(req, res = response) => {
 
 const getUser = async(req, res = response, next) => {
     
-    const id = req.body.uid;
+    const uid = req.body.id;
+
     try {
-        let user = await User.findById(id).populate([
+        let user = await User.findById(uid).populate([
             { path: 'ownProjects', select: 'name' },
             { path: 'projects', select: 'name'},
             { path: 'bugs', select: 'title project status priority severity'}
@@ -155,11 +155,11 @@ const getUser = async(req, res = response, next) => {
             return next(new HttpError('No user found', 404));
         }
 
-        const {_id:uid, name, ownProjects, projects, avatar, role, bugs} = user;
+        const {id, name, ownProjects, projects, avatar, role, bugs} = user;
 
         return res.status(200).json({
             ok: true,
-            uid,
+            id,
             name,
             ownProjects,
             projects,
@@ -179,6 +179,8 @@ const deleteUser = async(req, res = response, next) => {
 
         const { uid } = req.body;
         const user = await User.findById(uid);
+
+        if(uid !== user._id) return next(new HttpError('You need to own the account to delete it.', 403));
 
         if(!user) return next(new HttpError('No user with this id', 404));
 

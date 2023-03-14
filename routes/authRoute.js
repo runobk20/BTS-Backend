@@ -28,6 +28,6 @@ router.get('/renew', validateJwt, revalidateToken);
 
 router.get('/', validateJwt, getUser);
 
-router.delete('/:id', validateJwt, deleteUser);
+router.delete('/', validateJwt, deleteUser);
 
 module.exports = router;
